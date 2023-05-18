@@ -16,8 +16,8 @@ excercise in learning Odin, so I tried to write\
 an application to do this for me.
 
 ## How to use:
-1. Put the .exe in the same folder as your `.ico` file.
-2. Run the executable.
+1. Put the `IconToCursor.exe` in the same folder as your `.ico` file.
+2. Run `IconToCursor.exe`.
 3. Type in the icon file name (including the `.ico` part).
 4. Type in the x coordinate (from left to right).
 5. Type in the y coordinate (from top to bottom).
