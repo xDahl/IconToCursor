@@ -23,14 +23,15 @@ OFFSET_HEADER       :: 2
 OFFSET_HEADER_VALUE :: 2
 OFFSET_CURSOR_X     :: 0x0A
 OFFSET_CURSOR_Y     :: 0x0C
+HEADER_MIN_LEN      :: 0x0E
 
 
 main :: proc()
 {
-	buffer : [1024]u8
+	buffer : [4096]u8
 	x, y   : u16le
 
-	fmt.println("Icon to cursor 0.0.1\n")
+	fmt.println("Icon to cursor 0.0.2\n")
 	for {
 		fmt.printf("Enter filename (Example: \"file.ico\". Empty to quit).\n> ")
 		n, e := os.read(os.stdin, buffer[:])
@@ -93,10 +94,10 @@ get_dims :: proc() -> (u16le, u16le)
 
 handle_file :: proc(p : []u8, x, y : u16le)
 {
-	buffer : [1024]u8
+	buffer : [4096]u8
 	bytes : int
 	file_new, file_read : os.Handle
-	err       : os.Errno
+	err : os.Errno
 
 	if len(p) == 0 { return }
 
@@ -110,20 +111,19 @@ handle_file :: proc(p : []u8, x, y : u16le)
 	if err != os.ERROR_NONE { return }
 	defer { os.close(file_new) }
 
-	// For the first "page/buffer", we'll correct the
-	// offsets and data, and then write to the new file.
-	// After that, we'll just copy and paste into the new file.
+	/* For the first "page/buffer", we'll correct the
+	 * offsets and data, and then write to the new file.
+	 * After that, we'll just copy and paste into the new file. */
 
 	bytes, err = os.read(file_read, buffer[:])
 
 	// TODO: Check if we read enough bytes.
-	// if bytes < OFFSET_CURSOR_Y + 2 { return }
+	if bytes < HEADER_MIN_LEN { return }
 
-	// We'll use this to convert
-	// an unsigned 16 little endian number
-	// to a byte array.
-	// I think there are other ways of doing this,
-	// but I think this is the clearest/cleanest way of doing it.
+	/* We'll use this to convert an unsigned 16 bit
+	 * little endian number to a byte array.
+	 * I think there are other ways of doing this,
+	 * but I think this is the clearest/cleanest way of doing it. */
 	sequence :: struct #raw_union {
 		num   : u16le,
 		bytes : [2]u8
@@ -143,7 +143,7 @@ handle_file :: proc(p : []u8, x, y : u16le)
 	buffer[OFFSET_CURSOR_Y  ] = seq.bytes[0]
 	buffer[OFFSET_CURSOR_Y+1] = seq.bytes[1]
 
-	os.write(file_new, buffer[:])
+	os.write(file_new, buffer[:bytes])
 
 	// Now just copy and paste the rest of the file.
 	for {
